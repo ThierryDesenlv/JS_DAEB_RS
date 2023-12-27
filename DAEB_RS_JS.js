@@ -11131,6 +11131,7 @@ const notas = {
                 ["ESGOTO 50,00 & DO VALOR DA água", "", "10,16"],
                 ["ENDERECO ALTERNATIVO 12/2023", "", "3,10"],
                 ["CREDITO AUTOMATICO AGUA 10/2023", "", "52,25"],
+                // ["CREDITO AUTOMATICO AGUA 10/2023", "", "52,25"],
                 ["", "", ""],
                 ["", "TOTAL R$", "3,10"]
             ],
@@ -21391,7 +21392,7 @@ function dadosNota(pdfData) {
         }
     
         return false;
-    }; 
+    };
     const getProximaLeitura = (vlrLeituraAtual) => { //certo logica de - 30 dias apos a data atual
         const dataString = vlrLeituraAtual;
         if (!dataString) {
@@ -21534,7 +21535,7 @@ function dadosNota(pdfData) {
        }
        // console.log("Nenhum valor de juros encontrado.");
        return false;
-    }; 
+    };
     const getJurosComum = (pdf) => { // JurosComum - Obs: Caso venha negativo retornar como excecao
         const targetKeyword = "Juros";
         let valoresJuros = [];
@@ -21597,85 +21598,32 @@ function dadosNota(pdfData) {
         return valoresSomados;
        
     }; 
-    const getCredito = (pdf) => { //Credito = Desconto e acrescimo no SGU
-        const targetKeyword = "Crédito";
+    const getCredito = (pdf) => {
+        const targetKeyword = "CREDITO";
         let valoresJuros = [];
     
         for (const table of pdf.tables) {
             const rows = table.valuesContent.filter((row) => row.some((cell) => cell.includes(targetKeyword)));
     
             for (const row of rows) {
-                let valor = row[1];
+                let valor = row[2]; // Modificação para pegar o valor da terceira coluna (índice 2)
                 if (valor) {
-
-                    // Adiciona zeros à direita para manter três casas decimais
-                    valor = valor.replace(/,/g, '.');
-                    const partes = valor.split('.');
-                    if (partes.length === 1) {
-                        valor = partes[0] + '.000';
-                    } else if (partes[1].length === 1) {
-                        valor = partes[0] + '.' + partes[1] + '00';
-                    } else if (partes[1].length === 2) {
-                        valor = partes[0] + '.' + partes[1] + '0';
-                    } else {
-                        valor = partes[0] + '.' + partes[1];
-                    }
-    
-                    valor = parseFloat(valor);
+                    valor = parseFloat(valor.replace(',', '.')); // Substituir ',' por '.' para converter corretamente
                     valoresJuros.push(valor);
                 }
             }
         }
-    // Certifique-se de que há valores em valoresJuros antes de prosseguir
-    if (valoresJuros.length > 0) {
-        // Remova os sinais negativos dos valores
-        const valoresSemSinalNegativo = valoresJuros.map((valor) => Math.abs(valor));
-        // Some os valores absolutos
-        const somaValoresEncontrados = valoresSemSinalNegativo.reduce((total, valor) => total + valor, 0);
-        // Formate o resultado com três casas decimais
-        const fixandoValores = somaValoresEncontrados.toFixed(2)
-        const dadosTratados = trataPonto(fixandoValores)
-        return dadosTratados
-    }
-    return false;
-    }; 
-    const getLixo = (pdf) => {
-        const targetKeyword = "Lixo";
-    let valoresJuros = [];
-
-    for (const table of pdf.tables) {
-        const rows = table.valuesContent.filter((row) => row.some((cell) => cell.includes(targetKeyword)));
-
-        for (const row of rows) {
-            let valor = row[1];
-            if (valor) {
-                // Adiciona zeros à direita para manter três casas decimais
-                valor = valor.replace(/,/g, '.');
-                const partes = valor.split('.');
-                if (partes.length === 1) {
-                    valor = partes[0] + '.000';
-                } else if (partes[1].length === 1) {
-                    valor = partes[0] + '.' + partes[1] + '00';
-                } else if (partes[1].length === 2) {
-                    valor = partes[0] + '.' + partes[1] + '0';
-                } else {
-                    valor = partes[0] + '.' + partes[1];
-                }
-
-                valor = parseFloat(valor);
-                valoresJuros.push(valor);
-            }
+    
+        if (valoresJuros.length > 0) {
+            const somaValoresEncontrados = valoresJuros.reduce((total, valor) => total + valor, 0);
+            const fixandoValores = somaValoresEncontrados.toFixed(2);
+            const dadosTratados = trataPonto(fixandoValores);
+            return dadosTratados;
         }
-    }
-
-    if (valoresJuros.length > 0) {
-        const somaJuros = valoresJuros.reduce((total, valor) => total + valor, 0);
-        const resultadoFormatado = somaJuros.toFixed(2).toString(); // Formatação com três casas decimais
-        const valorEncontrado = resultadoFormatado.replace(/-/g,'');
-        return trataPonto(valorEncontrado)
-    }
-
-    // console.log("Nenhum valor de juros encontrado.");
+    
+        return false;
+    };
+    const getLixo = (pdf) => {
     return false;
     }; 
     const getTipo = (vlrLixo) => {
@@ -21684,112 +21632,36 @@ function dadosNota(pdfData) {
         }
         return "AL"
     };
-    const getEsgoto = (pdf) => { //Esgoto
-        const regexProcurado = /Esgoto:/i
-        let encontrouContador = 0;
-        let i = 0;
-    
-        while (i < pdf.lines.length) {
-            const line = pdf.lines[i];
-            const lineContent = line.content;
-            const lineMatches = lineContent.match(regexProcurado);
-    
-            if (lineMatches && lineMatches.length > 0) {
-                encontrouContador++;
-    
-                if (encontrouContador === 1) {
-                    const indexProximo = i + 1;
-                    const dado = pdf.lines[indexProximo]?.content.trim();
-                    const dados = trataPonto(dado);
-                    return dados || false
-                }
-            }
-    
-            i++;
-        }
-    
+    const getEsgoto = (pdf) => { 
         return false;
     };
-    const getAgua =(pdf) =>{
-        const regexProcurado = /Água:/i
-        let encontrouContador = 0;
-        let i = 0;
-    
-        while (i < pdf.lines.length) {
-            const line = pdf.lines[i];
-            const lineContent = line.content;
-            const lineMatches = lineContent.match(regexProcurado);
-    
-            if (lineMatches && lineMatches.length > 0) {
-                encontrouContador++;
-    
-                if (encontrouContador === 1) {
-                    const indexProximo = i + 1;
-                    const dado = pdf.lines[indexProximo]?.content.trim();
-                    const dados = trataPonto(dado);
-                    return dados || false
-                }
-            }
-    
-            i++;
-        }
-    
+    const getAgua = (pdf) =>{
         return false;
     };
-    const getTaxaRegulacao = (pdf) => { //Esgoto
-        const targetKeyword = "Taxa de regula";
-    
-        for (const table of pdf.tables) {
-            const rows = table.valuesContent.filter((row) => row.some((cell) => cell.includes(targetKeyword)));
-    
-            for (const row of rows) {
-                let valor = row[1];
-                if (valor) {
-
-                    // Adiciona zeros à direita para manter três casas decimais
-                    valor = valor.replace(/,/g, '.');
-                    const partes = valor.split('.');
-                    if (partes.length === 1) {
-                        valor = partes[0] + '.000';
-                    } else if (partes[1].length === 1) {
-                        valor = partes[0] + '.' + partes[1] + '00';
-                    } else if (partes[1].length === 2) {
-                        valor = partes[0] + '.' + partes[1] + '0';
-                    } else {
-                        valor = partes[0] + '.' + partes[1];
-                    }
-    
-                    valor = parseFloat(valor);
-
-                    // Retorna o primeiro valor encontrado e encerra a função
-                    return trataPonto(valor);
-                }
-            }
-        }
-    
+    const getTaxaRegulacao = (pdf) => { 
         return false;
     };
     const getValorTotalBruto = (pdf) => {
-    
-        const targetHeaderRegex = /TOTAL/i;
-        // Encontrar o headersContent correspondente
-        const matchingHeaders = pdf.tables.find((table) =>
-          table.headersContent.some((headerCell) => targetHeaderRegex.test(headerCell))
-        );
-        // Verificar se headersContent foi encontrado
-        if (matchingHeaders) {
-          const valuesContent = matchingHeaders.valuesContent || [];
-      
-          // Verificar se valuesContent não está vazio
-          if (valuesContent.length > 0) {
-            const ultimoArray = valuesContent[valuesContent.length - 1];
-            const ultimoValor = ultimoArray[ultimoArray.length - 1];
-            const valorNumerico = parseFloat(ultimoValor.replace(/[^\d,]/g, '').replace(',', '.'));
-            return trataPonto(valorNumerico)
-          } else {
-            return false;
-          }
+        const targetKeyword = "TOTAL";
+        for (const table of pdf.tables) {
+            const totalRow = table.valuesContent.find((row) => row.some((cell) => cell.includes(targetKeyword)));
+            if (totalRow) {
+                //console.log("Linha 'TOTAL R$' encontrada:", totalRow);
+                const ultimoValor = totalRow[totalRow.length - 1];
+                if (ultimoValor) {
+                    //console.log("Último valor da linha:", ultimoValor);
+                    const valorNumerico = parseFloat(ultimoValor.replace(/[^\d,]/g, '').replace(',', '.'));
+                    //console.log("Valor numérico:", valorNumerico);
+                    const fixandoValores = valorNumerico.toFixed(2);
+                    //console.log("Valor fixado em 2 casas decimais:", fixandoValores);
+                    const dadosTratados = trataPonto(fixandoValores);
+                    // console.log("Dados tratados:", dadosTratados);
+                    return dadosTratados;
+                }
+            }
         }
+        // console.log("Linha 'TOTAL R$' não encontrada");
+        return false;
     };
     const getVerificar = (pdf) =>{ //Verificando datas
         const regexData = /(\d{2}\/\d{2}\/\d{4})/gi;
@@ -21812,7 +21684,7 @@ function dadosNota(pdfData) {
     
         return false;
     };
-    const getExcecao = ( vlrJurosComum, vlrAtMonet ,vlrMultas, vlrVerificando) => { //flag de verificacao para gerar no SGU se retornar como true gerar excecao 
+    const getExcecao = (vlrJurosComum, vlrAtMonet ,vlrMultas, vlrVerificando) => { //flag de verificacao para gerar no SGU se retornar como true gerar excecao 
         if(vlrVerificando === true){
             // console.log('Gerar excecao no SGU')
             return true 
@@ -21834,83 +21706,17 @@ function dadosNota(pdfData) {
         };
         return false
     };
-    const getValorLiquido = (pdf, vlrValorTotalBruto, vlrMultas, vlrAtMonet, vlrJuros, vlrJurosComum, vlrCredito, vlrAgua, vlrEsgoto, vlrTaxaRegulacao,vlrLixo) => {
-        
-        const valorBruto = vlrValorTotalBruto
-        const multa =  vlrMultas;
-        const atMonet = vlrAtMonet;
-        const juros =  vlrJurosComum;
+    const getValorLiquido = (vlrValorTotalBruto, vlrCredito) => {
+        const valorBruto = vlrValorTotalBruto;
         const credito = vlrCredito;
-        const agua = vlrAgua;
-        const esgoto = vlrEsgoto
-        const taxaRegulacao = vlrTaxaRegulacao
-        const lixo = vlrLixo
-        //console.log('#Valor bruto = ', valorBruto,'/ #Valor de juros = ', juros,'/ #Valor de atMonet = ', atMonet,)
-        if (credito !== false){ //somar agua esgoto e taxa regulacao ok
-            let valor = agua 
-            if(esgoto !== false){
-                valor = somarValoresFloat(valor, esgoto);
-              }
-            if(taxaRegulacao !== false){
-                valor = somarValoresFloat(valor, taxaRegulacao);
-            }
-            if(multa !== false){
-                valor = subtrairValoresFloat(valor, multa);
-            }
-            if(atMonet !== false){
-                valor = subtrairValoresFloat(valor, atMonet);
-            }
-            if(juros !== false){
-                valor = subtrairValoresFloat(valor, juros);
-            }
-
-            //console.log('Soma dos valores apos o credito',valor)
-            return valor
-
-
-        }else{
-            if (lixo !== false) { //somar as despesas nromais sem a atxa de lixo
-                let valor = agua 
-                if(esgoto !== false){
-                    valor = somarValoresFloat(valor, esgoto);
-                  }
-                if(taxaRegulacao !== false){
-                    valor = somarValoresFloat(valor, taxaRegulacao);
-                }
-                if(multa !== false){
-                    valor = subtrairValoresFloat(valor, multa);
-                }
-                if(atMonet !== false){
-                    valor = subtrairValoresFloat(valor, atMonet);
-                }
-                if(juros !== false){
-                    valor = subtrairValoresFloat(valor, juros);
-                }
-                //console.log('Soma dos valores Quando tiver taxa lixo',valor)
-                return valor
-
-        }else{
-
-        let valor = valorBruto
-        if(multa !== false){
-          valor = subtrairValoresFloat(valor, multa);
+    
+        if (valorBruto === '0,00' || valorBruto === '') {
+            return credito;
+        } else {
+            return valorBruto;
         }
-        if(atMonet !== false){
-          valor = subtrairValoresFloat(valor, atMonet);
-        }
-        if(juros !== false){
-          valor = subtrairValoresFloat(valor, juros);
-        }
-        const valorTotalDesc = valorBruto
-      
-            if(trataPonto(vlrValorTotalBruto) !== '0,00' && valorTotalDesc === '*'){
-              isZerado.isZerado = true;
-            }
-            //console.log(`Valor Liquido Final`,valor)
-            return valor
-        }
-    }
     };
+    
 
     const getDados = (pdf) => {
       const vlrVencimento = getVencimento(pdf);//certo
@@ -21933,7 +21739,7 @@ function dadosNota(pdfData) {
       const vlrCredito = getCredito(pdf);
       const vlrDesconto = getCredito(pdf); //vlrDesconto = getCredito
       const vlrValorTotalBruto = getValorTotalBruto(pdf);
-      const vlrTotalaPagar = getValorLiquido(pdf, vlrValorTotalBruto, vlrMultas, vlrAtMonet, vlrJuros, vlrJurosComum, vlrCredito, vlrAgua ,vlrEsgoto, vlrTaxaRegulacao,vlrLixo);
+      const vlrTotalaPagar = getValorLiquido(vlrValorTotalBruto, vlrCredito);
       const vlrVerificando = getVerificar(pdf);
       const vlrExcecao = getExcecao(vlrJurosComum, vlrAtMonet ,vlrMultas, vlrVerificando);
       const vlrTipo = getTipo(vlrLixo);
@@ -21994,9 +21800,9 @@ function dadosNota(pdfData) {
   
   for (let nota in notas) {
   // uma nota use abaixo
-    //     if(nota !== "C:\\Users\\valore.robo7\\Desktop\\roberty1\\CasosParahomologar\\Segunda Via Imovel 453.pdf") {
-    //      continue
-    // }
+        if(nota !== "C:\\Users\\valore.robo7\\Desktop\\roberty1\\CasosParahomologar\\DAEB_DESCONTO.pdf") {
+         continue
+    }
   //uma nota so use acima ou comente
 
   
