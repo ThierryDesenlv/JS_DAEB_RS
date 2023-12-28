@@ -21743,23 +21743,6 @@ function dadosNota(pdfData) {
       const vlrVerificando = getVerificar(pdf);
       const vlrExcecao = getExcecao(vlrJurosComum, vlrAtMonet ,vlrMultas, vlrVerificando);
       const vlrTipo = getTipo(vlrLixo);
-    
-
-    //   vlrVencimento: '23/11/2023',
-    //   vlrContaReferente: '01/10/2023',
-    //   vlrDataDeEmissao: '28/10/2023',
-    //   vlrConsumoDoMes: '000010',
-    //   vlrLeituraAtual: '28/10/2023',
-    //   vlrValorLeituraAtual: '000562',
-    //   vlrLeituraAnterior: false,
-    //   vlrValorLeituraAnterior: '000552',
-    //   vlrProximaleitura: '30/11/2023',
-    //   vlrMultas: false,
-    //   vlrJuros: false,
-    //   vlrLixo: false,
-    //   vlrDesconto: false,
-    //   vlrTotalaPagar: '102,45',
-    //   vlrTipo: 'A',
 
       return {
         vlrVencimento,
@@ -21800,9 +21783,9 @@ function dadosNota(pdfData) {
   
   for (let nota in notas) {
   // uma nota use abaixo
-        if(nota !== "C:\\Users\\valore.robo7\\Desktop\\roberty1\\CasosParahomologar\\DAEB_DESCONTO.pdf") {
-         continue
-    }
+    //     if(nota !== "C:\\Users\\valore.robo7\\Desktop\\roberty1\\CasosParahomologar\\DAEB_DESCONTO.pdf") {
+    //      continue
+    // }
   //uma nota so use acima ou comente
 
   
