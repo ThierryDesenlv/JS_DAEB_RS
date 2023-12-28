@@ -21710,9 +21710,14 @@ function dadosNota(pdfData) {
         const valorBruto = vlrValorTotalBruto;
         const credito = vlrCredito;
     
-        if (valorBruto === '0,00' || valorBruto === '') {
+        if (valorBruto === '0,00' || valorBruto === '' && credito !== false) {
             return credito;
-        } else {
+        }
+        if(credito !== false ){
+            valor = somarValoresFloat(credito, valorBruto);
+            return valor
+        
+        }else {
             return valorBruto;
         }
     };
